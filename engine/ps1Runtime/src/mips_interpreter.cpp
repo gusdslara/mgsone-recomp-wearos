@@ -36,7 +36,7 @@ thread_local uint32_t t_deferredTailTarget = 0;
 thread_local bool t_deferredTailPending = false;
 
 constexpr uint64_t kInstructionBudget = 1'000'000;
-constexpr uint32_t kNativeBlockScanBytes = 0x4000;
+constexpr uint32_t kNativeBlockScanBytes = 0x28000;
 
 void deferTailDispatch(uint32_t target) noexcept {
   // One interpreter invocation can leave its island only once: publishing the

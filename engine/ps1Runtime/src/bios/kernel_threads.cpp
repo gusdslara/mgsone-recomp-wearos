@@ -8,15 +8,57 @@
 #include <system_error>
 #if defined(_WIN32)
 #include <windows.h>
-#endif
-#if defined(__unix__) || defined(__APPLE__)
+#elif defined(__ANDROID__)
+#include <cstdint>
+#elif defined(__unix__) || defined(__APPLE__)
 #include <ucontext.h>
 #endif
 extern void recomp_dispatch(uint8_t *, recomp_context *, uint32_t);
 extern void recomp_resume_dispatch(uint8_t *, recomp_context *, uint32_t);
 
 namespace ps1::bios {
-#if defined(_WIN32)
+#if defined(__ANDROID__) && defined(__arm__)
+namespace {
+struct alignas(8) AndroidFiberContext {
+  uint32_t regs[12]{}; // r4..r11 (0..7), sp (8), lr (9), pad (10..11)
+  uint64_t vfp[8]{};   // d8..d15
+};
+
+__attribute__((naked, target("arm"))) void android_fiber_swap(
+    AndroidFiberContext *from, const AndroidFiberContext *to) {
+  asm volatile(
+      "stmia r0!, {r4-r11}\n\t"
+      "str sp, [r0, #0]\n\t"
+      "str lr, [r0, #4]\n\t"
+      "add r0, r0, #16\n\t"
+      "vstmia r0, {d8-d15}\n\t"
+      "ldmia r1!, {r4-r11}\n\t"
+      "ldr sp, [r1, #0]\n\t"
+      "ldr lr, [r1, #4]\n\t"
+      "add r1, r1, #16\n\t"
+      "vldmia r1, {d8-d15}\n\t"
+      "bx lr\n\t");
+}
+
+__attribute__((naked, target("arm"))) void android_fiber_set(
+    const AndroidFiberContext *to) {
+  asm volatile(
+      "ldmia r0!, {r4-r11}\n\t"
+      "ldr sp, [r0, #0]\n\t"
+      "ldr lr, [r0, #4]\n\t"
+      "add r0, r0, #16\n\t"
+      "vldmia r0, {d8-d15}\n\t"
+      "bx lr\n\t");
+}
+
+__attribute__((naked, target("arm"))) void android_fiber_trampoline() {
+  asm volatile(
+      "mov r0, r4\n\t"
+      "mov lr, #0\n\t"
+      "bx r5\n\t");
+}
+} // namespace
+#elif defined(_WIN32)
 namespace {
 // Conversion belongs to the host thread, not to a particular saved timeline.
 // A restart replaces guest continuations while retaining this root stack.
@@ -44,7 +86,9 @@ void *windowsRootFiber() {
 struct KernelThreads::Impl {
   recomp_context &ctx;
   struct Fiber {
-#if defined(__unix__) || defined(__APPLE__)
+#if defined(__ANDROID__) && defined(__arm__)
+    AndroidFiberContext host{};
+#elif defined(__unix__) || defined(__APPLE__)
     ucontext_t host{};
 #elif defined(_WIN32)
     void *host = nullptr;
@@ -115,7 +159,9 @@ struct KernelThreads::Impl {
     } catch (...) {
       self.failure = std::current_exception();
       self.current = self.root;
-#if defined(__unix__) || defined(__APPLE__)
+#if defined(__ANDROID__) && defined(__arm__)
+      android_fiber_set(&self.root->host);
+#elif defined(__unix__) || defined(__APPLE__)
       setcontext(&self.root->host);
 #elif defined(_WIN32)
       SwitchToFiber(self.root->host);
@@ -123,9 +169,11 @@ struct KernelThreads::Impl {
       std::terminate();
     }
   }
+#if !defined(__ANDROID__) && (defined(__unix__) || defined(__APPLE__))
   static void entry(uint32_t low, uint32_t high) {
-    run(reinterpret_cast<Fiber *>((uintptr_t(high) << 32) | low));
+    run(reinterpret_cast<Fiber *>((uint64_t(high) << 32) | low));
   }
+#endif
 #if defined(_WIN32)
   static void WINAPI windowsEntry(void *data) { run(static_cast<Fiber *>(data)); }
 #endif
@@ -147,7 +195,21 @@ struct KernelThreads::Impl {
     Fiber &target = fibers[(address - base()) / 0xc0];
     if (ctx.mem->read32(address) != 0x4000)
       throw std::runtime_error("ChangeTh to free TCB");
-#if defined(__unix__) || defined(__APPLE__)
+#if defined(__ANDROID__) && defined(__arm__)
+    if (!target.initialized) {
+      target.stack.resize(1 * 1024 * 1024);
+      target.owner = this;
+      target.tcb = address;
+      target.host = AndroidFiberContext{};
+      const uint32_t spTop =
+          (reinterpret_cast<uint32_t>(target.stack.data() + target.stack.size()) & ~15u);
+      target.host.regs[0] = reinterpret_cast<uint32_t>(&target);
+      target.host.regs[1] = reinterpret_cast<uint32_t>(&Impl::run);
+      target.host.regs[8] = spTop;
+      target.host.regs[9] = reinterpret_cast<uint32_t>(&android_fiber_trampoline);
+      target.initialized = true;
+    }
+#elif defined(__unix__) || defined(__APPLE__)
     if (!target.initialized) {
       target.stack.resize(4 * 1024 * 1024);
       target.owner = this;
@@ -157,7 +219,7 @@ struct KernelThreads::Impl {
       target.host.uc_stack.ss_sp = target.stack.data();
       target.host.uc_stack.ss_size = target.stack.size();
       target.host.uc_link = nullptr;
-      const uintptr_t pointer = reinterpret_cast<uintptr_t>(&target);
+      const uint64_t pointer = reinterpret_cast<uintptr_t>(&target);
       makecontext(&target.host, reinterpret_cast<void (*)()>(&Impl::entry), 2,
                   uint32_t(pointer), uint32_t(pointer >> 32));
       target.initialized = true;
@@ -184,7 +246,9 @@ struct KernelThreads::Impl {
     metrics::count("bios.thread_switch");
     metrics::trace("bios.thread_switch",
                    {{"from", previous->tcb}, {"to", address}, {"pc", ctx.pc}});
-#if defined(__unix__) || defined(__APPLE__)
+#if defined(__ANDROID__) && defined(__arm__)
+    android_fiber_swap(&previous->host, &target.host);
+#elif defined(__unix__) || defined(__APPLE__)
     if (swapcontext(&previous->host, &target.host) != 0)
       throw std::runtime_error("swapcontext failed");
 #elif defined(_WIN32)

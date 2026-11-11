@@ -1,0 +1,63 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace "com.mgsnative.wear"
+    compileSdkVersion 34
+    ndkVersion "27.0.12077973"
+
+    defaultConfig {
+        applicationId "com.mgsnative.wear"
+        minSdkVersion 26
+        targetSdkVersion 34
+        versionCode 1
+        versionName "1.0.0-mgs-wear"
+
+        ndk {
+            abiFilters 'armeabi-v7a'
+        }
+
+        externalNativeBuild {
+            cmake {
+                arguments "-DANDROID_STL=c++_static", "-DANDROID_ARM_NEON=TRUE"
+                cppFlags "-std=c++20 -fexceptions -frtti -O3 -DNDEBUG"
+                abiFilters 'armeabi-v7a'
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    externalNativeBuild {
+        cmake {
+            path "../../CMakeLists.txt"
+            version "3.22.1"
+        }
+    }
+
+    sourceSets {
+        main {
+            java.srcDirs = [
+                'src/main/java',
+                '../../externals/SDL/android-project/app/src/main/java'
+            ]
+            res.srcDirs = [
+                'src/main/res'
+            ]
+        }
+    }
+
+    lint {
+        abortOnError false
+    }
+}
+
+dependencies {
+    implementation 'androidx.core:core:1.12.0'
+}

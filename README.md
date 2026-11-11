@@ -1,3 +1,41 @@
+﻿# Midnight Ghost Stone — Wear OS Port & Native Recompilation
+
+<p align="center">
+  <img src="watch_mgs_stealth_demo.png" alt="Metal Gear Solid Wear OS" width="480">
+</p>
+
+Native recompilation port of **Metal Gear Solid 1 (PS1, SLUS-005.94)** specifically tailored and optimized for **Wear OS smartwatches** (Samsung Galaxy Watch 4/5/6/7/Ultra, Google Pixel Watch 1/2/3, Xiaomi Watch 2, and all circular Wear OS devices) alongside modern desktop platforms.
+
+---
+
+## ⌚ Wear OS Highlights
+
+### 1. 🎯 Dynamic Stealth Floating Analog Stick
+- **Stealth Stalking (Soft Tilt):** Walk softly without triggering footstep noises on metal grates or waking sleeping guards.
+- **Full Sprint (Outer Ring):** Run at full speed when escaping alerts.
+- **Center Return & Deadzone:** Dynamic anchor placed right where your thumb touches the left half of the watch face.
+
+### 2. 🎛️ Tactical Quick-Access Controls
+- **Inventory & Weapons (L / R):** Ergonomic transparent triggers placed along the upper bezel curvature for rapid weapon & equipment switching without obstructing gameplay.
+- **Action Buttons (□, ○, ✕, △):** High-contrast geometric PlayStation buttons along the right arc with touch shadow feedback.
+- **Dedicated CODEC (SELECT):** Top bezel shortcut to instantly access radio communications.
+
+### 3. 👁️ 1st Person Gyroscope Aiming
+- Enter First-Person Perspective (△ or FPP view).
+- **Wrist Gyro Aiming:** Tilt your wrist naturally to look around, inspect surroundings, and aim SOCOM or Stinger missiles directly in 3D space.
+
+### 4. 📺 Authentic 4:3 Circular Presentation ("The Big One")
+- Fills the 432x432 circular display edge-to-edge preserving authentic 4:3 PS1 proportions without squashing or distortion.
+
+### 5. 🛠️ Building for Wear OS
+`ash
+cd android
+./gradlew :wear:assembleDebug
+`
+Output APK is generated at ndroid/wear/build/outputs/apk/debug/wear-debug.apk.
+
+---
+
 <p align="center">
   <img src="docs/images/mgsone-header.png" alt="Midnight Ghost Stone" width="100%">
 </p>
@@ -40,7 +78,7 @@ And, of course, **Konami and the original Metal Gear Solid team**, who made
 the game worth doing all this for.
 [Credits, provenance and license scope](packaging/THIRD_PARTY_NOTICES.md).
 
-> **[alpha.1 — UNTESTED](https://github.com/coccofresco/mgsone-recomp/releases/tag/alpha.1)**
+> **[alpha.1 â€” UNTESTED](https://github.com/coccofresco/mgsone-recomp/releases/tag/alpha.1)**
 > Experimental Linux and Windows builds, published for early testing.
 > These release packages are not gameplay- or platform-qualified. A continuous
 > completed campaign, every boss fight and physical Steam Deck compatibility
@@ -81,7 +119,7 @@ images are not currently supported by the native game build. No BIOS download
 is required. Discs, extracted assets and generated game translations are
 prepared locally and are excluded from this repository.
 
-### Download alpha.1 — UNTESTED
+### Download alpha.1 â€” UNTESTED
 
 Choose your package from the
 **[alpha.1 prerelease](https://github.com/coccofresco/mgsone-recomp/releases/tag/alpha.1)**:
@@ -165,7 +203,7 @@ files from user data and provides explicit save backups and diagnostic exports.
   gameplay into 60 Hz physics. Currently opt-in through the developer runtime
   (`PS1_MGS_FRAME_INTERPOLATION=1` with `scripts/run_native.sh`), not a launcher
   setting. [Implementation and measured evidence](docs/mgs-frame-interpolation-evidence.json).
-- Fast loading, **automatic disc 1 → disc 2 change**, persistent memory cards,
+- Fast loading, **automatic disc 1 â†’ disc 2 change**, persistent memory cards,
   quick-state slots, a host pause menu and controller-port switching.
 - Keyboard and SDL controllers, Steam Input integration, device selection,
   deadzone settings and an input test screen.
@@ -232,3 +270,4 @@ This is an independent, unofficial project, not affiliated with or endorsed
 by Konami. Metal Gear Solid and its assets belong to their respective owners.
 
 At least the cardboard box has somewhere modern to hide.
+

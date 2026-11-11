@@ -3988,16 +3988,16 @@ bool sceneryFaceIntersectsPresentationFrustum(
   }
 
   if (orientation != nullptr) {
-    const __int128 determinant =
-        static_cast<__int128>(vertices[0].x) *
-            (static_cast<__int128>(vertices[1].y) * vertices[2].z -
-             static_cast<__int128>(vertices[1].z) * vertices[2].y) -
-        static_cast<__int128>(vertices[0].y) *
-            (static_cast<__int128>(vertices[1].x) * vertices[2].z -
-             static_cast<__int128>(vertices[1].z) * vertices[2].x) +
-        static_cast<__int128>(vertices[0].z) *
-            (static_cast<__int128>(vertices[1].x) * vertices[2].y -
-             static_cast<__int128>(vertices[1].y) * vertices[2].x);
+    const int64_t determinant =
+        static_cast<int64_t>(vertices[0].x) *
+            (static_cast<int64_t>(vertices[1].y) * vertices[2].z -
+             static_cast<int64_t>(vertices[1].z) * vertices[2].y) -
+        static_cast<int64_t>(vertices[0].y) *
+            (static_cast<int64_t>(vertices[1].x) * vertices[2].z -
+             static_cast<int64_t>(vertices[1].z) * vertices[2].x) +
+        static_cast<int64_t>(vertices[0].z) *
+            (static_cast<int64_t>(vertices[1].x) * vertices[2].y -
+             static_cast<int64_t>(vertices[1].y) * vertices[2].x);
     *orientation = determinant > 0 ? 1 : determinant < 0 ? -1 : 0;
   }
 
@@ -4020,10 +4020,10 @@ bool sceneryFaceIntersectsPresentationFrustum(
     *touchesNativeHorizontalBoundary = std::any_of(
         vertices.begin(), vertices.end(),
         [&](const SceneryCameraVertex &vertex) {
-          const __int128 nativeX =
-              static_cast<__int128>(256) * vertex.z +
-              static_cast<__int128>(projectionPlane) * vertex.x;
-          return nativeX < 0 || nativeX > static_cast<__int128>(512) * vertex.z;
+          const int64_t nativeX =
+              static_cast<int64_t>(256) * vertex.z +
+              static_cast<int64_t>(projectionPlane) * vertex.x;
+          return nativeX < 0 || nativeX > static_cast<int64_t>(512) * vertex.z;
         });
   }
   const auto allOutside = [&](const auto &outside) {
@@ -4037,32 +4037,32 @@ bool sceneryFaceIntersectsPresentationFrustum(
   // by exactly 4*G*z. Vulkan still clips against the real output viewport.
   const auto outsideHorizontal = [&](uint32_t guardPixels) {
     return allOutside([&](const SceneryCameraVertex &vertex) {
-             const __int128 qx4 =
-                 static_cast<__int128>(1024) * vertex.z +
-                 static_cast<__int128>(3) * projectionPlane * vertex.x;
-             const __int128 guard =
-                 static_cast<__int128>(4) * guardPixels * vertex.z;
+             const int64_t qx4 =
+                 static_cast<int64_t>(1024) * vertex.z +
+                 static_cast<int64_t>(3) * projectionPlane * vertex.x;
+             const int64_t guard =
+                 static_cast<int64_t>(4) * guardPixels * vertex.z;
              return qx4 < -guard;
            }) ||
            allOutside([&](const SceneryCameraVertex &vertex) {
-             const __int128 qx4 =
-                 static_cast<__int128>(1024) * vertex.z +
-                 static_cast<__int128>(3) * projectionPlane * vertex.x;
-             const __int128 guard =
-                 static_cast<__int128>(4) * guardPixels * vertex.z;
-             return qx4 > static_cast<__int128>(2048) * vertex.z + guard;
+             const int64_t qx4 =
+                 static_cast<int64_t>(1024) * vertex.z +
+                 static_cast<int64_t>(3) * projectionPlane * vertex.x;
+             const int64_t guard =
+                 static_cast<int64_t>(4) * guardPixels * vertex.z;
+             return qx4 > static_cast<int64_t>(2048) * vertex.z + guard;
            });
   };
   const bool outsideVertical =
       allOutside([&](const SceneryCameraVertex &vertex) {
-        const __int128 qy = static_cast<__int128>(128) * vertex.z +
-                            static_cast<__int128>(projectionPlane) * vertex.y;
+        const int64_t qy = static_cast<int64_t>(128) * vertex.z +
+                            static_cast<int64_t>(projectionPlane) * vertex.y;
         return qy < 0;
       }) ||
       allOutside([&](const SceneryCameraVertex &vertex) {
-        const __int128 qy = static_cast<__int128>(128) * vertex.z +
-                            static_cast<__int128>(projectionPlane) * vertex.y;
-        return qy > static_cast<__int128>(256) * vertex.z;
+        const int64_t qy = static_cast<int64_t>(128) * vertex.z +
+                            static_cast<int64_t>(projectionPlane) * vertex.y;
+        return qy > static_cast<int64_t>(256) * vertex.z;
       });
   const uint32_t guardPixels = guardOverride.value_or(sceneryCullGuardPixels());
   const bool outsideExactHorizontal = outsideHorizontal(0u);

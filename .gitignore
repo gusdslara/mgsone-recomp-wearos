@@ -10,9 +10,14 @@ __pycache__/
 *.chd
 *.sub
 *.exe
-/engine/ps1Runtime/src/recompiled_out.cpp
-/engine/ps1Runtime/src/recompiled_out.generated.h
-/engine/ps1Runtime/src/recompiled_out.part*.cpp
+
+# Android build outputs
+.gradle/
+**/build/
+local.properties
+**/.cxx/
+*.apk
+*.aar
 
 /savestates/
 
