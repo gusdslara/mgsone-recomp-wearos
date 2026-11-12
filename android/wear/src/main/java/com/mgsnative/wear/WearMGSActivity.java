@@ -55,10 +55,15 @@ public class WearMGSActivity extends SDLActivity implements SensorEventListener 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        // Force portrait before SDL creates its surface — prevents EGL rotation glitch
-        setRequestedOrientation(android.content.pm.ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+        // Lock orientation completely — overrides system auto-rotate AND Samsung wrist-flip setting
+        setRequestedOrientation(android.content.pm.ActivityInfo.SCREEN_ORIENTATION_LOCKED);
         super.onCreate(savedInstanceState);
         mLibsLoaded = true;
+
+        // Extra: pin display rotation via WindowManager so the compositor never rotates us
+        android.view.WindowManager.LayoutParams lp = getWindow().getAttributes();
+        lp.screenOrientation = android.content.pm.ActivityInfo.SCREEN_ORIENTATION_LOCKED;
+        getWindow().setAttributes(lp);
 
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
