@@ -229,6 +229,9 @@ int SDL_main(int argc, char* argv[]) {
 
     LOGI("Starting MGS1 Native Wear OS Runtime (Very Low Graphics / Cool Mode)...");
 
+    // Lock orientation to portrait so SDL never rotates the EGL surface
+    SDL_SetHint(SDL_HINT_ORIENTATIONS, "Portrait");
+
     if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_EVENTS)) {
         LOGE("SDL_Init failed: %s", SDL_GetError());
         return 1;
@@ -518,6 +521,11 @@ int SDL_main(int argc, char* argv[]) {
         while (SDL_PollEvent(&ev)) {
             if (ev.type == SDL_EVENT_QUIT) {
                 running = false;
+            } else if (ev.type == SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED) {
+                // Surface resized (e.g., SDL briefly rotated the EGL surface during init)
+                // Re-read actual pixel dimensions so render viewport stays correct
+                SDL_GetWindowSizeInPixels(window, &winW, &winH);
+                LOGI("SDL surface resized -> %dx%d, recalculating viewport", winW, winH);
             }
         }
 

@@ -55,6 +55,8 @@ public class WearMGSActivity extends SDLActivity implements SensorEventListener 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        // Force portrait before SDL creates its surface — prevents EGL rotation glitch
+        setRequestedOrientation(android.content.pm.ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         super.onCreate(savedInstanceState);
         mLibsLoaded = true;
 
