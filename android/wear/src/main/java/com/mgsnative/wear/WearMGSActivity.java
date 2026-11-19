@@ -25,6 +25,24 @@ import org.libsdl.app.SDLActivity;
  */
 public class WearMGSActivity extends SDLActivity implements SensorEventListener {
 
+    // Watch: the screen never rotates. SDL asks for a sensor-driven orientation that follows
+    // the game's window shape; ignore it and pin portrait (rotation 0 on a round/square watch;
+    // "nosensor" would keep whatever rotation the lock screen left behind).
+    @Override
+    public void setOrientationBis(int w, int h, boolean resizable, String hint) {
+        if (!isWatchDevice()) super.setOrientationBis(w, h, resizable, hint);
+    }
+
+    @Override
+    public void setRequestedOrientation(int requestedOrientation) {
+        super.setRequestedOrientation(isWatchDevice()
+                ? android.content.pm.ActivityInfo.SCREEN_ORIENTATION_PORTRAIT : requestedOrientation);
+    }
+
+    private boolean isWatchDevice() {
+        return getPackageManager().hasSystemFeature(android.content.pm.PackageManager.FEATURE_WATCH);
+    }
+
     private static final String TAG = "WearMGSActivity";
 
     private WearMGSTouchOverlay touchOverlay;
@@ -55,14 +73,14 @@ public class WearMGSActivity extends SDLActivity implements SensorEventListener 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        // Lock orientation completely — overrides system auto-rotate AND Samsung wrist-flip setting
-        setRequestedOrientation(android.content.pm.ActivityInfo.SCREEN_ORIENTATION_LOCKED);
+        // Never rotate: portrait is rotation 0 on a round/square watch, auto-rotate ignored
+        setRequestedOrientation(android.content.pm.ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         super.onCreate(savedInstanceState);
         mLibsLoaded = true;
 
         // Extra: pin display rotation via WindowManager so the compositor never rotates us
         android.view.WindowManager.LayoutParams lp = getWindow().getAttributes();
-        lp.screenOrientation = android.content.pm.ActivityInfo.SCREEN_ORIENTATION_LOCKED;
+        lp.screenOrientation = android.content.pm.ActivityInfo.SCREEN_ORIENTATION_PORTRAIT;
         getWindow().setAttributes(lp);
 
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
